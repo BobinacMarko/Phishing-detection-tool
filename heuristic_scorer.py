@@ -29,6 +29,14 @@ def score_features(features: Dict) -> Dict:
     host_entropy = features.get("host_entropy", 0.0)
     path_entropy = features.get("path_entropy", 0.0)
     has_double_slash = features.get("has_double_slash", False)
+    redirect_count = features.get("redirect_count", 0)
+    external_form_action = features.get("external_form_action", False)
+    external_domain_count = features.get("external_domain_count", 0)
+    external_script_count = features.get("external_script_count", 0)
+    iframe_count = features.get("iframe_count", 0)
+    meta_refresh = features.get("meta_refresh", False)
+    suspicious_js = features.get("suspicious_js_keywords", [])
+    word_count = features.get("word_count", 0)
 
     # base signals
     if suspicious_tld:
@@ -59,6 +67,10 @@ def score_features(features: Dict) -> Dict:
         score += 0.45
         cat_scores["card_theft"] += 1.4
         _add_reason(reasons, "Page contains card-related input fields")
+    if external_form_action:
+        score += 0.25
+        _add_reason(reasons, "Form submits to a different domain")
+        cat_scores["credential_theft"] += 0.8
 
     # keyword signals
     kw = set(k.lower() for k in keywords)
@@ -96,6 +108,28 @@ def score_features(features: Dict) -> Dict:
     if has_double_slash:
         score += 0.05
         _add_reason(reasons, "Unusual double-slash in path")
+    if redirect_count >= 3:
+        score += 0.10
+        _add_reason(reasons, "Multiple redirects before reaching content")
+    if meta_refresh:
+        score += 0.12
+        _add_reason(reasons, "Meta refresh redirect detected")
+    if iframe_count >= 2:
+        score += 0.10
+        _add_reason(reasons, "Page contains multiple iframes")
+    if external_domain_count >= 5:
+        score += 0.08
+        _add_reason(reasons, "Page loads content from many external domains")
+    if external_script_count >= 3:
+        score += 0.08
+        _add_reason(reasons, "Page loads several external scripts")
+    if suspicious_js:
+        score += 0.18
+        _add_reason(reasons, "Suspicious JavaScript patterns detected")
+        cat_scores["malware"] += 0.6
+    if word_count and word_count < 80 and features.get("has_login_form"):
+        score += 0.06
+        _add_reason(reasons, "Sparse page text with login form")
 
     # suspicious TLD boosts
     if tld in ("zip", "xyz", "top", "gq", "tk", "ml"):
