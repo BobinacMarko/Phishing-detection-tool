@@ -29,7 +29,7 @@ def _is_external(base_host: str, url: str) -> bool:
 
 
 def _count_external_domains(base_host: str, urls: List[str]) -> int:
-    domains = { _host(u).lower() for u in urls if _host(u) }
+    domains = {_host(u).lower() for u in urls if _host(u)}
     return len({d for d in domains if d != base_host.lower()})
 
 
