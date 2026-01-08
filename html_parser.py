@@ -1,3 +1,4 @@
+# html_parser.py
 from __future__ import annotations
 
 from typing import Dict, List
@@ -136,7 +137,6 @@ def analyze_html_for_forms(url: str) -> Dict:
             names = [inp.get("name", "").lower() for inp in inputs if inp.get("name")]
             types = [inp.get("type", "").lower() for inp in inputs if inp.get("type")]
 
-            # password
             if "password" in types or any("password" in n for n in names):
                 result["has_password_input"] = True
                 result["has_login_form"] = True
@@ -144,7 +144,6 @@ def analyze_html_for_forms(url: str) -> Dict:
 
             result["hidden_input_count"] += sum(1 for t in types if t == "hidden")
 
-            # card fields heuristics
             card_like = {
                 "card", "cardnumber", "card_number", "cc-number", "cc_number",
                 "ccnumber", "cvv", "cvc", "expiry", "exp",
@@ -157,7 +156,6 @@ def analyze_html_for_forms(url: str) -> Dict:
 
             result["detected_fields"].extend(names)
 
-        # deduplicate
         result["detected_fields"] = list(dict.fromkeys(result["detected_fields"]))
 
     except Exception:
